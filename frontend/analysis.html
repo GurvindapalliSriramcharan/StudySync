@@ -1,95 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>StudySync | Analysis</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="top-bar">
-  <div class="logo">📊</div>
-  <div class="app-name">Performance Analysis</div>
+  <div class="logo-section">
+    <div class="logo">📝</div>
+    <div class="app-name">Performance Analysis</div>
+  </div>
+  <button class="home-btn" onclick="goHome()">🏠 Home</button>
 </div>
 
 <div class="page-container">
-  <h2>Your Quiz Analysis</h2>
+  <h2>📈 Your Quiz Analysis</h2>
 
   <div id="analysisContent"></div>
 
-  <h3>Select Your Learning Speed</h3>
+  <div class="form-section">
+    <h3>📅 Exam Schedule</h3>
+    
+    <div class="input-group">
+      <label for="daysLeft">How many days left for your exam?</label>
+      <input type="number" id="daysLeft" min="1" max="365" placeholder="e.g., 7">
+    </div>
 
-  <div class="radio-group">
-    <label>
-      <input type="radio" name="speed" value="slow">
-      Slow Learner (needs more revision)
-    </label>
-    <label>
-      <input type="radio" name="speed" value="average">
-      Average Learner
-    </label>
-    <label>
-      <input type="radio" name="speed" value="fast">
-      Fast Learner (quick grasp)
-    </label>
+    <div class="input-group">
+      <label for="hoursPerDay">How many hours can you study per day?</label>
+      <input type="number" id="hoursPerDay" min="1" max="12" placeholder="e.g., 4">
+    </div>
   </div>
 
-  <button onclick="saveSpeed()">Generate Timetable</button>
+  <div class="form-section">
+    <h3>🎯 Select Your Learning Speed</h3>
+
+    <div class="radio-group">
+      <label class="radio-option">
+        <input type="radio" name="speed" value="slow">
+        <span>🐢 Slow Learner (needs more revision)</span>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="speed" value="average">
+        <span>🚶 Average Learner</span>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="speed" value="fast">
+        <span>🚀 Fast Learner (quick grasp)</span>
+      </label>
+    </div>
+  </div>
+
+  <button onclick="saveSpeed()">Generate Timetable →</button>
 </div>
 
-<script type="module" src="script.js">
-/*********************
- ANALYSIS LOGIC (FINAL FIX)
-*********************/
-function getLevel(score) {
-  if (score <= 2) return "Weak";
-  if (score === 3) return "Average";
-  return "Strong";
-}
-
-const analysisDiv = document.getElementById("analysisContent");
-const quizData = JSON.parse(localStorage.getItem("quizData"));
-
-if (!quizData) {
-  analysisDiv.innerHTML = "<p>No quiz data found.</p>";
-} else {
-  let html = "<table><tr><th>Unit</th><th>Score</th><th>Level</th></tr>";
-
-  Object.keys(quizData).forEach(unitKey => {
-    const score = localStorage.getItem(`${unitKey}_score`);
-
-    if (score !== null) {
-      html += `
-        <tr>
-          <td>${unitKey.replace("_", " ").toUpperCase()}</td>
-          <td>${score}/5</td>
-          <td>${getLevel(Number(score))}</td>
-        </tr>
-      `;
-    }
-  });
-
-  html += "</table>";
-  analysisDiv.innerHTML = html;
-}
-
-/*********************
- SAVE LEARNER SPEED
-*********************/
-function saveSpeed() {
-  const selected = document.querySelector("input[name='speed']:checked");
-
-  if (!selected) {
-    alert("Please select your learning speed");
-    return;
-  }
-
-  localStorage.setItem("learnerSpeed", selected.value);
-  localStorage.setItem("timetableGenerated", "true");
-  localStorage.setItem("importantReady", "true");
-
-  window.location.href = "/frontend/timetable.html";
-}
-
-</script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
