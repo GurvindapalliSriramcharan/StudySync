@@ -413,8 +413,20 @@ function generateTimetable() {
     slowLearnerNote.style.display = "block";
   }
 
-  // Total available study hours
-  const totalHours = daysLeft * hoursPerDay;
+  // Total available study hours (user's max capacity)
+  const maxTotalHours = daysLeft * hoursPerDay;
+
+  // Learner speed multiplier - fast learners need less of the total time
+  // Slow: uses 100% of available time
+  // Average: uses 75% of available time  
+  // Fast: uses 50% of available time
+  const speedMultiplier = {
+    slow: 1.0,
+    average: 0.75,
+    fast: 0.5
+  };
+
+  const effectiveHours = maxTotalHours * (speedMultiplier[learnerSpeed] || 0.75);
 
   // Calculate weight for each unit based on performance (weaker = more time needed)
   const weights = { weak: 3, average: 2, strong: 1 };
@@ -433,11 +445,11 @@ function generateTimetable() {
     totalWeight += weight;
   });
 
-  // Reserve time for revision (10% of total, minimum 0.5 hrs)
-  const revisionHours = Math.max(0.5, Math.round(totalHours * 0.1 * 10) / 10);
-  const studyHours = totalHours - revisionHours;
+  // Reserve time for revision (15% of effective hours, minimum 0.5 hrs)
+  const revisionHours = Math.max(0.5, Math.round(effectiveHours * 0.15 * 10) / 10);
+  const studyHours = effectiveHours - revisionHours;
 
-  // Distribute study hours based on weights, ensuring total matches exactly
+  // Distribute study hours based on weights
   let allocatedTotal = 0;
   unitData.forEach((u, idx) => {
     if (idx === unitData.length - 1) {
@@ -449,62 +461,49 @@ function generateTimetable() {
     allocatedTotal += u.hours;
   });
 
-  // Build day-by-day timetable
+  // Build simple day-wise schedule
   let html = "";
-  let dayCounter = 1;
-  let currentDayHours = 0;
-  let dayUnits = [];
+  const totalDays = Math.min(daysLeft, selectedUnits.length + 1); // +1 for revision
+  
+  // Calculate hours per day based on effective hours and days
+  const effectiveHoursPerDay = Math.round((effectiveHours / totalDays) * 10) / 10;
 
-  // Flatten unit hours into daily slots
-  const schedule = [];
-  unitData.forEach(u => {
-    let remaining = u.hours;
-    while (remaining > 0) {
-      const chunk = Math.min(remaining, hoursPerDay - currentDayHours);
-      if (chunk > 0) {
-        dayUnits.push({ unitNum: u.unitNum, performance: u.performance, hours: Math.round(chunk * 10) / 10 });
-        currentDayHours += chunk;
-        remaining -= chunk;
-      }
-      if (currentDayHours >= hoursPerDay || remaining <= 0) {
-        if (dayUnits.length > 0) {
-          schedule.push({ day: dayCounter, units: [...dayUnits] });
-          dayCounter++;
-          dayUnits = [];
-          currentDayHours = 0;
-        }
-      }
-    }
+  // Assign units to days
+  unitData.forEach((u, idx) => {
+    const dayNum = idx + 1;
+    html += '<tr>';
+    html += '<td>Day ' + dayNum + '</td>';
+    html += '<td>Unit ' + u.unitNum + '</td>';
+    html += '<td style="color:' + (u.performance === 'weak' ? '#e74c3c' : u.performance === 'average' ? '#f39c12' : '#27ae60') + ';font-weight:bold;">' + u.performance.charAt(0).toUpperCase() + u.performance.slice(1) + '</td>';
+    html += '<td>' + u.hours + ' hrs</td>';
+    html += '</tr>';
   });
 
-  // Push any remaining units
-  if (dayUnits.length > 0) {
-    schedule.push({ day: dayCounter, units: [...dayUnits] });
-    dayCounter++;
+  // Add revision day
+  const revisionDay = selectedUnits.length + 1;
+  if (revisionDay <= daysLeft) {
+    html += '<tr>';
+    html += '<td>Day ' + revisionDay + '</td>';
+    html += '<td>Revision (All Units)</td>';
+    html += '<td style="color:#3498db;font-weight:bold;">Review</td>';
+    html += '<td>' + revisionHours + ' hrs</td>';
+    html += '</tr>';
   }
 
-  // Add revision to remaining days
-  while (dayCounter <= daysLeft) {
-    const revHoursToday = Math.min(hoursPerDay, revisionHours / (daysLeft - dayCounter + 1));
-    schedule.push({ 
-      day: dayCounter, 
-      units: [{ unitNum: "Revision", performance: "All Units", hours: Math.round(revHoursToday * 10) / 10 }] 
-    });
-    dayCounter++;
+  // Summary section
+  const actualTotal = Math.round((allocatedTotal + revisionHours) * 10) / 10;
+  const freeTime = Math.round((maxTotalHours - actualTotal) * 10) / 10;
+  
+  html += '<tr style="background:#e8f4e8;font-weight:bold;"><td colspan="3">📚 Required Study Time</td><td>' + actualTotal + ' hrs</td></tr>';
+  html += '<tr style="background:#f0f7ff;"><td colspan="3">⏰ Your Available Time (' + daysLeft + ' days × ' + hoursPerDay + ' hrs)</td><td>' + maxTotalHours + ' hrs</td></tr>';
+  
+  if (freeTime > 0) {
+    html += '<tr style="background:#fff3cd;"><td colspan="3">🎉 Free Time / Buffer</td><td>' + freeTime + ' hrs</td></tr>';
   }
 
-  // Render schedule
-  schedule.forEach(daySchedule => {
-    daySchedule.units.forEach((u, idx) => {
-      const dayLabel = idx === 0 ? "Day " + daySchedule.day : "";
-      const unitLabel = u.unitNum === "Revision" ? "Revision" : "Unit " + u.unitNum;
-      const perfLabel = u.unitNum === "Revision" ? "All Units" : u.performance.charAt(0).toUpperCase() + u.performance.slice(1);
-      html += '<tr><td>' + dayLabel + '</td><td>' + unitLabel + '</td><td>' + perfLabel + '</td><td>' + u.hours + ' hrs</td></tr>';
-    });
-  });
-
-  // Summary row
-  html += '<tr style="background:#e8f4e8;font-weight:bold;"><td colspan="3">Total Study Time</td><td>' + totalHours + ' hrs</td></tr>';
+  // Add learner speed info
+  const speedEmoji = learnerSpeed === 'fast' ? '🚀' : learnerSpeed === 'slow' ? '🐢' : '🚶';
+  html += '<tr style="background:#f8f9fa;"><td colspan="4">' + speedEmoji + ' <strong>' + learnerSpeed.charAt(0).toUpperCase() + learnerSpeed.slice(1) + ' Learner</strong> - Using ' + Math.round(speedMultiplier[learnerSpeed] * 100) + '% of available time</td></tr>';
 
   timetableContent.innerHTML = html;
 }
