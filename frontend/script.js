@@ -8,7 +8,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const API = import.meta.env.VITE_BACKEND_URL;
+const API = "https://studysync-1-zgdy.onrender.com";
 
 fetch(`${API}/api/test`);
 
