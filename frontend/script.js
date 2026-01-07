@@ -8,12 +8,15 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+<<<<<<< HEAD
 const API = "https://studysync-1-zgdy.onrender.com";
 
 fetch(`${API}/api/test`);
 
 
 
+=======
+>>>>>>> c8d2474 (Update frontend to use Render backend API)
 /*********************************
  NAVIGATION
 *********************************/
@@ -198,6 +201,7 @@ async function initQuiz() {
   currentUnit = units[unitIndex];
   
   try {
+<<<<<<< HEAD
     // Fetch from frontend/questions/ folder
     const filePath = "questions/unit" + currentUnit + ".json";
     console.log("Fetching:", filePath);
@@ -206,6 +210,12 @@ async function initQuiz() {
     if (!res.ok) throw new Error("HTTP " + res.status + " - Failed to load unit " + currentUnit);
     const data = await res.json();
     console.log("Questions loaded:", data.questions.length);
+=======
+    // Fetch from backend API
+    const res = await fetch("https://studysync-1-zgdy.onrender.com/api/questions/unit" + currentUnit);
+    if (!res.ok) throw new Error("Failed to load unit " + currentUnit);
+    const data = await res.json();
+>>>>>>> c8d2474 (Update frontend to use Render backend API)
 
     // Shuffle and pick 5 random questions
     const shuffled = shuffleArray([...data.questions]);
@@ -215,7 +225,11 @@ async function initQuiz() {
     quizQuestions.forEach(q => q.unitNum = currentUnit);
 
   } catch (err) {
+<<<<<<< HEAD
     console.error("Error loading quiz:", err);
+=======
+    console.error(err);
+>>>>>>> c8d2474 (Update frontend to use Render backend API)
     document.getElementById("questionText").textContent = "Failed to load questions for Unit " + currentUnit;
     return;
   }
@@ -534,6 +548,7 @@ async function loadImportantQuestions() {
 
   for (const unitNum of selectedUnits) {
     try {
+<<<<<<< HEAD
       const filePath = "important/unit" + unitNum + ".json";
       console.log("Fetching important:", filePath);
       const res = await fetch(filePath);
@@ -541,6 +556,11 @@ async function loadImportantQuestions() {
       if (!res.ok) throw new Error("HTTP " + res.status + " - Failed to load unit " + unitNum);
       const data = await res.json();
       console.log("Important questions loaded for unit " + unitNum + ":", data.questions.length);
+=======
+      const res = await fetch("https://studysync-1-zgdy.onrender.com/api/important/unit" + unitNum);
+      if (!res.ok) throw new Error("Failed to load");
+      const data = await res.json();
+>>>>>>> c8d2474 (Update frontend to use Render backend API)
 
       html += '<div class="unit-section">';
       html += '<h3 class="unit-header">' + data.unit + '</h3>';
@@ -562,7 +582,11 @@ async function loadImportantQuestions() {
 
       html += '</div></div>';
     } catch (err) {
+<<<<<<< HEAD
       console.error("Error loading unit " + unitNum + ":", err);
+=======
+      console.error("Error loading unit " + unitNum, err);
+>>>>>>> c8d2474 (Update frontend to use Render backend API)
       html += '<div class="unit-section"><h3>Unit ' + unitNum + '</h3><p>Questions not available.</p></div>';
     }
   }
